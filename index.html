@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Data Analysis Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0d0f12; color: #e2e8f0; }
+        .neon-box { background-color: #161a1f; border-left: 4px solid #adff2f; }
+        .tab-btn { background-color: #1e252d; color: #94a3b8; border-radius: 9999px; transition: all 0.3s; }
+        .tab-btn.active { background-color: #adff2f; color: #000; font-weight: bold; }
+    </style>
+</head>
+<body class="p-6 md:p-12 font-sans">
+
+    <div class="bg-[#adff2f] text-black p-8 rounded-3xl mb-8">
+        <span class="text-xs font-bold uppercase tracking-wider text-gray-700">Track A • Explorer</span>
+        <h1 class="text-3xl md:text-4xl font-extrabold mt-1">AI Data Analysis Assistant</h1>
+        <p class="text-sm mt-2 max-w-xl text-gray-800">Ask a fixed question, see the stats, and get a plain-language read on what the data says.</p>
+    </div>
+
+    <h2 class="text-[#adff2f] font-bold tracking-wider uppercase text-xs mb-4">Dataset Summary</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-[#161a1f] p-4 rounded-2xl">
+            <span class="text-xs text-gray-400 block uppercase font-medium">Rows</span>
+            <span class="text-2xl font-bold">{{ stats.total_records }}</span>
+        </div>
+        <div class="bg-[#161a1f] p-4 rounded-2xl">
+            <span class="text-xs text-gray-400 block uppercase font-medium">Columns</span>
+            <span class="text-2xl font-bold">6</span>
+        </div>
+    </div>
+
+    <div class="bg-[#161a1f] p-4 rounded-2xl mb-4">
+        <span class="text-xs text-gray-400 block uppercase font-medium mb-1">Column Names</span>
+        <span class="font-semibold text-sm">OrderID, Product, Category, City, CustomerAge, Sales</span>
+    </div>
+
+    <h2 class="text-[#adff2f] font-bold tracking-wider uppercase text-xs mb-4 mt-8">Q&A</h2>
+    <div class="space-y-4 mb-8">
+        <div class="neon-box p-4 rounded-r-2xl">
+            <span class="text-xs text-gray-400 block mb-1">Which product generated the highest sales?</span>
+            <p class="font-bold text-base">The product with the highest sales is 'AC' with sales of 95000.</p>
+            <span class="inline-block text-[10px] bg-[#1e252d] text-[#adff2f] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider mt-2">Rule-Based</span>
+        </div>
+        <div class="neon-box p-4 rounded-r-2xl">
+            <span class="text-xs text-gray-400 block mb-1">What is the average age of customers?</span>
+            <p class="font-bold text-base">The average age of customers is 33.0 years.</p>
+            <span class="inline-block text-[10px] bg-[#1e252d] text-[#adff2f] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider mt-2">Rule-Based</span>
+        </div>
+        <div class="neon-box p-4 rounded-r-2xl">
+            <span class="text-xs text-gray-400 block mb-1">Which city has the maximum orders?</span>
+            <p class="font-bold text-base">'Karachi' has the maximum number of orders (7).</p>
+            <span class="inline-block text-[10px] bg-[#1e252d] text-[#adff2f] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider mt-2">Rule-Based</span>
+        </div>
+    </div>
+
+    <h2 class="text-[#adff2f] font-bold tracking-wider uppercase text-xs mb-4 mt-8">Chart</h2>
+    <div class="bg-[#161a1f] p-6 rounded-3xl flex flex-col items-center">
+        <div class="w-full max-w-2xl bg-white rounded-xl p-4 mb-6">
+            <img id="displayChart" src="/get_chart/bar" alt="Data Visualization" class="w-full h-auto object-contain">
+        </div>
+
+        <div class="flex flex-wrap gap-2 justify-center">
+            <button onclick="switchChart('bar', this)" class="tab-btn active px-6 py-2 text-sm font-medium">Bar</button>
+            <button onclick="switchChart('pie', this)" class="tab-btn px-6 py-2 text-sm font-medium">Pie</button>
+            <button onclick="switchChart('line', this)" class="tab-btn px-6 py-2 text-sm font-medium">Line</button>
+            <button onclick="switchChart('histogram', this)" class="tab-btn px-6 py-2 text-sm font-medium">Histogram</button>
+        </div>
+    </div>
+
+    <script>
+        function switchChart(chartType, element) {
+            // Update Image source dynamically without refreshing page
+            document.getElementById('displayChart').src = '/get_chart/' + chartType;
+            
+            // Toggle active classes on buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+        }
+    </script>
+</body>
+</html>
