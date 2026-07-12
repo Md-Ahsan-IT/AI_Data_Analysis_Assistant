@@ -1,92 +1,99 @@
 import streamlit as st
+import os
 import pandas as pd
-import json
-import matplotlib.pyplot as plt
-import seaborn as sns
 from analysis import DataAnalyzer
+from visualization import (
+    generate_category_sales_chart,
+    generate_region_orders_chart,
+    generate_city_orders_chart,
+    generate_sales_trend_chart,
+    generate_sales_distribution_chart
+)
 
-# Page Configuration (Better UI & Dark/Light Theme Support)
-st.set_page_config(page_title="AI Data Assistant", page_icon="📊", layout="wide")
+st.set_page_config(page_title="AI Data Analysis Assistant", layout="wide")
 
 st.title("📊 AI-Powered Data Analysis Assistant")
-st.markdown("### Track A - Explorer | Bonus Feature Dashboard")
+st.subheader("Track A - Explorer | Bonus Feature Dashboard")
 
-# Step 1: CSV Upload Button (Bonus Feature)
-uploaded_file = st.sidebar.file_uploader("Upload your Dataset (CSV)", type=["csv"])
+# Sidebar for file upload
+st.sidebar.header("Upload your Dataset (CSV)")
+uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type="csv")
 
+# Agar koi file upload nahi hui toh default dataset use karein
 if uploaded_file is not None:
-    # Save uploaded file temporarily to work with your DataAnalyzer class
+    # Save uploaded file temporarily
     with open("temp_dataset.csv", "wb") as f:
         f.write(uploaded_file.getbuffer())
-        
-    # Initialize your existing analyzer
-    analyzer = DataAnalyzer("temp_dataset.csv")
+    csv_path = "temp_dataset.csv"
+else:
+    csv_path = "dataset.csv"
+
+# Check if dataset exists before proceeding
+if os.path.exists(csv_path):
+    analyzer = DataAnalyzer(csv_path)
     analyzer.load_data()
-    
-    # Calculate statistics using your existing logic
     stats = analyzer.compute_statistics()
-    
-    # ---- UI LAYOUT ----
-    col1, col2 = st.columns([1, 2])
-    
+
+    # Layout: Summary and Visualizations side by side
+    col1, col2 = st.columns([1, 1])
+
     with col1:
-        st.subheader("📋 Dataset Summary")
-        st.write(f"**Total Rows:** {stats['total_records']}")
-        st.write(f"**Columns:** {len(analyzer.df.columns)}")
-        st.write(f"**Average Sales:** ${stats['average_sales']:,.2f}")
-        st.write(f"**Total Profit:** ${stats['total_profit']:,.2f}")
+        st.write("### 📋 Dataset Summary")
+        st.write(f"**Total Rows:** {stats.get('total_rows', 0)}")
+        st.write(f"**Total Columns:** {stats.get('total_columns', 0)}")
         
-        st.subheader("❓ Judge Questions & Answers")
+        # Format sales safely
+        avg_sales = stats.get('average_sales', 0)
+        st.write(f"**Average Sales/Value:** ${avg_sales:,.2f}")
+        
+        tot_profit = stats.get('total_profit', 0)
+        st.write(f"**Total Profit/Summary:** ${tot_profit:,.2f}")
+
+        # Judge Questions Section
+        st.write("### ❓ Judge Questions & Answers")
+        
         q1 = "Which product/sub-category generated the highest sales?"
-        st.info(f"**Q: {q1}**\n\n*A: {analyzer.answer_question(q1)}*")
+        st.info(f"**Q: {q1}**\n\nA: {analyzer.answer_question(q1)}")
         
         q2 = "Which city has the maximum orders?"
-        st.info(f"**Q: {q2}**\n\n*A: {analyzer.answer_question(q2)}*")
+        st.info(f"**Q: {q2}**\n\nA: {analyzer.answer_question(q2)}")
         
         q3 = "Which category appears most frequently?"
-        st.info(f"**Q: {q3}**\n\n*A: {analyzer.answer_question(q3)}*")
+        st.info(f"**Q: {q3}**\n\nA: {analyzer.answer_question(q3)}")
 
-    # YAHAN FIXED: Yeh block ab bilkul sahi tarike se if condition ke andar aligned hai
     with col2:
-        st.subheader("📈 Visualizations")
+        st.write("### 📈 Visualizations")
         
-        # Teen chart options select box (Bonus Feature)
-        chart_type = st.selectbox("Select Chart Layout", ["Category Distribution", "Sales Analytics", "Region Distribution"])
-        
-        fig, ax = plt.subplots(figsize=(8, 4))
-        
-        if chart_type == "Category Distribution":
-            cat_data = analyzer.df['Category'].value_counts()
-            sns.barplot(x=cat_data.index, y=cat_data.values, ax=ax, palette="viridis")
-            ax.set_title("Orders by Category")
-            ax.set_xlabel("Category")
-            ax.set_ylabel("Number of Orders")
-            
-        elif chart_type == "Sales Analytics":
-            subcat_sales = analyzer.df.groupby('Sub-Category')['Sales'].sum().sort_values(ascending=False).head(5)
-            sns.barplot(x=subcat_sales.values, y=subcat_sales.index, ax=ax, palette="magma")
-            ax.set_title("Top 5 Sub-Categories by Sales")
-            ax.set_xlabel("Total Sales ($)")
-            ax.set_ylabel("Sub-Category")
-            
-        elif chart_type == "Region Distribution":
-            region_data = analyzer.df['Region'].value_counts()
-            sns.barplot(x=region_data.index, y=region_data.values, ax=ax, palette="coolwarm")
-            ax.set_title("Orders by Region")
-            ax.set_xlabel("Region")
-            ax.set_ylabel("Number of Orders")
-            
-        st.pyplot(fig)
-        
-        # Rule-based / AI explanation portion
-        st.subheader("🤖 AI Explanation (Fallback Active)")
-        explanation = (
-            f"The dataset shows that office supplies or leading segments are making up a significant portion. "
-            f"Specifically, average sales stand at ${stats['average_sales']:,.2f} per order line, with a total net profit "
-            f"of ${stats['total_profit']:,.2f} mapped across all records."
+        # Automatically generate all 5 charts safely in the background
+        chart1 = generate_category_sales_chart(analyzer.df)
+        chart2 = generate_region_orders_chart(analyzer.df)
+        chart3 = generate_city_orders_chart(analyzer.df)
+        chart4 = generate_sales_trend_chart(analyzer.df)
+        chart5 = generate_sales_distribution_chart(analyzer.df)
+
+        # Dropdown menu for layouts matching your 5 chart files
+        chart_option = st.selectbox(
+            "Select Chart Layout",
+            ["Category Distribution", "Top Sub-Categories", "Top Cities/Groups", "Sales Trend", "Sales Distribution"]
         )
-        st.success(explanation)
+
+        # Render charts safely by checking if the file was actually generated
+        if chart_option == "Category Distribution" and os.path.exists(chart2):
+            st.image(chart2, caption="Order Distribution Chart", use_container_width=True)
+            
+        elif chart_option == "Top Sub-Categories" and os.path.exists(chart1):
+            st.image(chart1, caption="Top Sub-Categories Sales Bar Chart", use_container_width=True)
+            
+        elif chart_option == "Top Cities/Groups" and os.path.exists(chart3):
+            st.image(chart3, caption="Top Cities/Groups Order Count Chart", use_container_width=True)
+            
+        elif chart_option == "Sales Trend" and os.path.exists(chart4):
+            st.image(chart4, caption="Sales/Value Trend Over Time", use_container_width=True)
+            
+        elif chart_option == "Sales Distribution" and os.path.exists(chart5):
+            st.image(chart5, caption="Value/Sales Frequency Distribution Histogram", use_container_width=True)
+        else:
+            st.warning("This specific chart layout is unavailable for the uploaded dataset format.")
 
 else:
-    # Agar user ne file upload nahi ki toh yeh message dikhega
-    st.info("👈 Please upload a CSV file from the sidebar to start the analysis dashboard!")
+    st.warning("Please upload a dataset or ensure 'dataset.csv' is present in the project folder.")
